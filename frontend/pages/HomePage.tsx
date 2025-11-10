@@ -1,9 +1,8 @@
-// frontend/pages/HomePage.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Card from '../components/Card';
 import { XCircleIcon } from '../components/Icons';
 import { Session, VehicleCount } from '../types';
-import { API_BASE, fetchModels, uploadVideo, startStream, stopStream, fetchStats, ModelChoice } from '../lib/api';
+import { API_BASE, fetchModels, uploadVideo, startStream, stopStream, fetchStats, saveSession, ModelChoice } from '../lib/api';
 
 const VEHICLE_COLORS: Record<VehicleCount['type'], { light: string; dark: string }> = {
   'Car': { light: '#2563eb', dark: '#60a5fa' },
@@ -15,11 +14,11 @@ const VEHICLE_COLORS: Record<VehicleCount['type'], { light: string; dark: string
 const Spinner: React.FC = () => (
   <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    <path className="opacity-75" fill="currentColor" d="M4 12a 8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
   </svg>
 );
 
-type StreamSlot = { url: string | null; isInferencing: boolean; sid: number };
+type StreamSlot = { url: string | null; isInferencing: boolean; sid: number; sourceLabel?: string };
 
 const VideoStreamPlayer: React.FC<{
   index: number;
@@ -74,10 +73,15 @@ const VideoStreamPlayer: React.FC<{
       {/* Stats overlay */}
       {!isInitializing && !error && overlay && stream.isInferencing && (
         <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/80 to-transparent text-white transition-opacity duration-300 z-10">
-          <p className="font-bold text-sm mb-1" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
-            Total Vehicles: {overlay.total}
-          </p>
-          <div className="grid grid-cols-2 gap-x-3 text-xs" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-sm" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
+              Total Vehicles: {overlay.total}
+            </p>
+            {stream.sourceLabel && (
+              <p className="text-[11px] opacity-80">{stream.sourceLabel}</p>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 text-xs mt-1" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
             {overlay.breakdown.map(v => (
               <p key={v.type}>{v.type}: <strong>{v.count}</strong></p>
             ))}
@@ -151,12 +155,11 @@ const HomePage: React.FC = () => {
     });
   }, []);
 
-  // handle local file upload -> convert to blob preview in UI (optional)
+  // handle local file upload -> we upload to backend on start
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setLocalFileName(file.name);
-    // We won't play blob locally; we upload to backend on start.
   };
 
   const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,6 +173,21 @@ const HomePage: React.FC = () => {
   const pickFirstEmptySid = () => {
     const idx = streams.findIndex(s => s.url === null && !s.isInferencing);
     return idx === -1 ? -1 : idx;
+  };
+
+  const smartSourceLabel = (source: string, uploadedName?: string | null) => {
+    const lower = source.toLowerCase();
+    if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+      return 'YouTube Stream';
+    }
+    if (lower.startsWith('rtsp://')) return 'RTSP Camera';
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      const last = source.split('/').pop() || 'Online Video';
+      return `Online Video - ${last}`;
+    }
+    if (uploadedName) return `Local Video - ${uploadedName}`;
+    const last = source.split(/[\\/]/).pop() || 'Local Video';
+    return `Local Video - ${last}`;
   };
 
   const handleStartInference = async () => {
@@ -188,15 +206,18 @@ const HomePage: React.FC = () => {
 
       // source handling: upload if user picked a local file
       let sourceToUse = videoUrlInput.trim();
+      let sourceLabel = '';
       if ((!sourceToUse || sourceToUse.startsWith('blob:')) && fileInputRef.current?.files?.[0]) {
         setInitState(prev => prev.map((v, i) => i === slotIndex ? true : v));
-        const uploaded = await uploadVideo(fileInputRef.current.files[0]);
-        sourceToUse = uploaded; // absolute path returned by backend
-      }
-
-      if (!sourceToUse) {
-        alert('Enter a stream URL or upload a local file.');
-        return;
+        const uploadedPath = await uploadVideo(fileInputRef.current.files[0]);
+        sourceToUse = uploadedPath; // absolute path from backend
+        sourceLabel = smartSourceLabel(sourceToUse, fileInputRef.current.files[0].name);
+      } else {
+        if (!sourceToUse) {
+          alert('Enter a stream URL or upload a local file.');
+          return;
+        }
+        sourceLabel = smartSourceLabel(sourceToUse, localFileName);
       }
 
       // loading overlay ON
@@ -217,7 +238,7 @@ const HomePage: React.FC = () => {
       const mjpegUrl = `${API_BASE}/streams/mjpeg?sid=${sid}`;
       setStreams(prev => {
         const next = [...prev];
-        next[slotIndex] = { url: mjpegUrl, isInferencing: true, sid };
+        next[slotIndex] = { url: mjpegUrl, isInferencing: true, sid, sourceLabel };
         return next;
       });
 
@@ -247,17 +268,17 @@ const HomePage: React.FC = () => {
             copy[slotIndex] = overlay;
             return copy;
           });
-          // hide "connecting" once stats arrive the first time
+          // hide "connecting" once stats arrive
           setInitState(prev => prev.map((v, i) => i === slotIndex ? false : v));
-        } catch (e: any) {
-          // keep trying; if session stops, backend returns 404
+        } catch {
+          // keep polling; 404 means stopped
         }
       }, 1000);
 
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Failed to start stream");
-      // turn off loader
+      // turn off loader for the (attempted) slot
       setInitState(prev => prev.map((v, i) => i === 0 ? false : v));
     }
   };
@@ -266,9 +287,7 @@ const HomePage: React.FC = () => {
     const sid = streams[index].sid;
     try {
       await stopStream(sid);
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
     if (pollTimers.current[sid]) {
       window.clearInterval(pollTimers.current[sid]);
       delete pollTimers.current[sid];
@@ -301,7 +320,7 @@ const HomePage: React.FC = () => {
     });
     pollTimers.current = {};
 
-    // best effort stop all
+    // best-effort stop all
     for (const s of streams) {
       try { await stopStream(s.sid); } catch {}
     }
@@ -310,6 +329,51 @@ const HomePage: React.FC = () => {
     setStats([null, null, null, null]);
     setInitState([false, false, false, false]);
     setErrors([null, null, null, null]);
+  };
+
+  /** ---------- SAVE SESSION (one record per active stream) ---------- **/
+  const handleSaveSession = async () => {
+    // collect active streams with stats
+    const tasks: Promise<any>[] = [];
+    streams.forEach((slot, i) => {
+      const st = stats[i];
+      if (!slot.isInferencing || !st) return;
+
+      // map VehicleCount[] -> backend keys
+      const map: Record<string, number> = { car: 0, van: 0, truck: 0, bus: 0 };
+      st.breakdown.forEach(b => {
+        const key = b.type.toLowerCase();
+        if (key in map) map[key] = b.count;
+      });
+      const total = map.car + map.van + map.truck + map.bus;
+      const source = slot.sourceLabel || `Stream ${slot.sid}`;
+
+      tasks.push(saveSession({
+        model: selectedModel || "Unknown Model",
+        source,
+        total,
+        breakdown: {
+          car: map.car,
+          van: map.van,
+          truck: map.truck,
+          bus: map.bus,
+        },
+        avg_fps: Number(st.fps_proc || 0),
+      }));
+    });
+
+    if (tasks.length === 0) {
+      alert("No active streams to save.");
+      return;
+    }
+
+    try {
+      await Promise.all(tasks);
+      alert("Session(s) saved to Dashboard.");
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to save sessions.");
+    }
   };
 
   const isStartDisabled = !selectedModel || (!videoUrlInput.trim() && !(fileInputRef.current?.files?.[0]));
@@ -385,7 +449,7 @@ const HomePage: React.FC = () => {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => alert('Hook this to /save-session later')}
+                  onClick={handleSaveSession}
                   className="flex-1 bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300">
                   Save Session
                 </button>

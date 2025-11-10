@@ -1,30 +1,30 @@
-// frontend/lib/api.ts
 export const API_BASE = "http://localhost:5000";
 
-export interface ModelChoice {
-  file: string;
-  name: string;
+/* -------------------- MODELS -------------------- */
+
+export async function fetchModels() {
+  const res = await fetch(`${API_BASE}/models`);
+  if (!res.ok) throw new Error("Failed to fetch models");
+  return res.json(); // [{file,name}]
 }
 
-export async function fetchModels(): Promise<ModelChoice[]> {
-  const res = await fetch(`${API_BASE}/streams/model-list`);
-  const data = await res.json();
-  return data.models || [];
-}
+export type ModelChoice = { file: string; name: string };
+
+/* -------------------- STREAMS -------------------- */
 
 export async function uploadVideo(file: File): Promise<string> {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch(`${API_BASE}/streams/upload-video`, {
+  const res = await fetch(`${API_BASE}/streams/upload`, {
     method: "POST",
     body: fd,
   });
   if (!res.ok) throw new Error("Upload failed");
   const data = await res.json();
-  return data.path; // absolute path for backend to open
+  return data.path as string; // local path returned by backend
 }
 
-export async function startStream(params: {
+export async function startStream(payload: {
   sid: number;
   model_file: string;
   source: string;
@@ -35,13 +35,11 @@ export async function startStream(params: {
   const res = await fetch(`${API_BASE}/streams/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error || "Failed to start stream");
-  }
-  return res.json();
+  const data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data.message || "Start failed");
+  return data;
 }
 
 export async function stopStream(sid: number) {
@@ -50,12 +48,46 @@ export async function stopStream(sid: number) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sid }),
   });
-  if (!res.ok) throw new Error("Failed to stop stream");
+  if (!res.ok) throw new Error("Stop failed");
   return res.json();
 }
 
 export async function fetchStats(sid: number) {
   const res = await fetch(`${API_BASE}/streams/stats?sid=${sid}`);
-  if (!res.ok) throw new Error("No stats yet");
+  if (!res.ok) throw new Error("Stats not available");
+  return res.json();
+}
+
+/* -------------------- SESSIONS (DB) -------------------- */
+
+// Save a new session to DB
+export async function saveSession(payload: {
+  model: string;
+  source: string;
+  total: number;
+  breakdown: { car: number; van: number; truck: number; bus: number };
+  avg_fps: number;
+}) {
+  const res = await fetch(`${API_BASE}/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Failed to save session");
+  return data;
+}
+
+// Fetch all sessions from DB
+export async function fetchSessions() {
+  const res = await fetch(`${API_BASE}/sessions`);
+  if (!res.ok) throw new Error("Failed to fetch sessions");
+  return res.json(); // { sessions: [...] }
+}
+
+// Delete a session by ID
+export async function deleteSession(id: number) {
+  const res = await fetch(`${API_BASE}/sessions/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete session");
   return res.json();
 }
