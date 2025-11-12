@@ -5,6 +5,14 @@
 
 ---
 
+## 🚀 Example Visuals
+
+
+![Home Preview](./frontend/images/home_preview.png)
+![Dashboard Preview](./frontend/images/dashboard_preview.png)
+
+---
+
 ## 🚦 Overview
 
 Traffic Sense AI allows users to run **simultaneous object detection** across up to 4 video sources — whether live streams, YouTube links, or uploaded videos — all through an intuitive web dashboard.
@@ -160,7 +168,7 @@ This uses **concurrently** to start Flask + React simultaneously.
 ## 🔗 Related Work & Research
 
 For in-depth architecture details, ablation studies, and other YOLO variants, visit the companion repository:  
-👉 **[YOLO-FEE: Feature Enhanced Extensions of YOLOv8](https://github.com/pnihal6/YOLO-FEE)**
+👉 **[YOLO-FEE: Feature Experimentation and Enhancement](https://github.com/pnihal6/YOLO-FEE)**
 
 ---
 
@@ -208,13 +216,7 @@ If you use this work or YOLO-FDE in your research, please cite:
 
 ---
 
-## 🚀 Example Visuals
 
-
-![Home Preview](./frontend/images/home_preview.png)
-![Dashboard Preview](./frontend/images/dashboard_preview.png)
-
----
 
 ## 🏁 Summary
 
