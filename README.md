@@ -54,7 +54,7 @@ The proposed **YOLO-FDE** introduces dynamic feature interaction and adaptive sa
 It outperforms other YOLOv8 variants on the **UA-DETRAC** dataset, with the best **mAP@50–95 = 0.8159** while maintaining minimal computational overhead.
 
 For detailed research methodology and ablation studies, refer to our extended repository:  
-👉 **[YOLO-FEE: Feature Enhance and Experimentations](https://github.com/pnihal6/YOLO-FEE)**
+👉 **[YOLO-FEE: Feature Experimentation and Enhancement](https://github.com/pnihal6/YOLO-FEE)**
 
 ---
 
