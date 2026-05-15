@@ -257,38 +257,4 @@ Traffic Sense AI represents a fusion of research-grade deep learning and product
 
 **Smarter Cities, Safer Roads — Powered by Intelligent Vision.**
 
----
 
-text
-
-## Key Changes Made to README:
-
-### ✅ Updated Star Model:
-
-* Changed from **YOLO-FDE** to **YOLO-DFA** as the main focus
-* Updated architecture description with 5 new modules (R-ELAN, BiFPN, C2PSA, SE, Area Attention)
-
-### ✅ Updated Performance Table:
-
-* Added all 9 models
-* Highlighted YOLO-DFA as the best performer
-
-### ✅ Updated Team Section:
-
-* Added contribution table
-* Highlighted Priyadarshi Nihal as Lead
-
-### ✅ Added Research Publications Section:
-
-* ICRATM 2026 (Accepted & Presented - April 2026)
-* IEEE Access (Under Review)
-
-### ✅ Updated Citation:
-
-* Changed to YOLO-DFA citation
-
-### ✅ Updated Results Summary:
-
-* New metrics and parameter reduction
-
-Perfect now! 🎉
