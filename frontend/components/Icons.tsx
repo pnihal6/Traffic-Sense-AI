@@ -4,9 +4,7 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string;
 }
 
-/* ──────────────────────────────── */
-/* 🏠 HOME ICON (UNCHANGED)        */
-/* ──────────────────────────────── */
+
 export const HomeIcon: React.FC<IconProps> = ({ size = 24, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -25,9 +23,7 @@ export const HomeIcon: React.FC<IconProps> = ({ size = 24, ...props }) => (
   </svg>
 );
 
-/* ──────────────────────────────── */
-/* 🧠 MODELS ICON (UPDATED)        */
-/* ──────────────────────────────── */
+
 export const ModelsIcon: React.FC<IconProps> = ({ size = 24, ...props }) => (
   // 🧠 Neural Network Symbol — represents AI/ML model connections
   <svg
@@ -150,9 +146,7 @@ export const MoonIcon: React.FC<IconProps> = ({ size = 24, ...props }) => (
   </svg>
 );
 
-/* ──────────────────────────────── */
-/* ⬇️ DOWNLOAD ICON                */
-/* ──────────────────────────────── */
+
 export const DownloadIcon: React.FC<IconProps> = ({ size = 16, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -172,9 +166,7 @@ export const DownloadIcon: React.FC<IconProps> = ({ size = 16, ...props }) => (
   </svg>
 );
 
-/* ──────────────────────────────── */
-/* ❌ X CIRCLE ICON                */
-/* ──────────────────────────────── */
+
 export const XCircleIcon: React.FC<IconProps> = ({ size = 20, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

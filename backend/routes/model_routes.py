@@ -18,7 +18,7 @@ MODEL_LABELS = {
     "bifpn.pt": "YOLO + BiFPN",
     "mhsa.pt": "YOLO + MHSA",
     "msn.pt": "YOLO + MSN",
-    "fde+bifpn+bytetrack.pt": "YOLO-FDE + BiFPN + ByteTrack",
+    "dfa.pt": "YOLO-DFA",
 }
 
 # --------------------------------------------------
@@ -40,7 +40,7 @@ MODEL_META = {
         "features": ["MSN"],
         "tracking": False,
     },
-    "fde+bifpn+bytetrack.pt": {
+    "dfa.pt": {
         "type": "detector+tracker",
         "features": ["FDE", "BiFPN"],
         "tracking": True,
