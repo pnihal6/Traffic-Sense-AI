@@ -44,7 +44,7 @@ It features:
 
 <div align="center">
 
-![YOLO-DFA Architecture](./frontend/images/yolo_dfa_architecture.png)
+![YOLO-DFA Architecture](./frontend/images/dfa.png)
 
 <em>Figure: YOLO-DFA architecture with R-ELAN, BiFPN, C2PSA, SE, Area Attention, and FDIDH head.</em>
 
